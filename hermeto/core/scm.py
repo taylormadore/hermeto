@@ -20,6 +20,7 @@ from hermeto.core.errors import (
     NotAGitRepo,
     UnsupportedFeature,
 )
+from hermeto.core.rooted_path import RootedPath
 from hermeto.core.type_aliases import StrPath
 
 log = logging.getLogger(__name__)
@@ -179,6 +180,25 @@ class RepoID(NamedTuple):
         See https://github.com/package-url/purl-spec/blob/master/PURL-SPECIFICATION.rst#known-qualifiers-keyvalue-pairs
         """
         return f"git+{self.origin_url}@{self.commit_id}"
+
+
+class GitSourceLocation(NamedTuple):
+    """The location of source within a repository at a specific commit."""
+
+    repo_id: RepoID
+    path: RootedPath
+
+    def as_vcs_url_qualifier(self, relative_path: Path | None = None) -> str:
+        """Return the repository and source path as a decoded ``vcs_url`` qualifier."""
+        source_path = self.path
+        if relative_path is not None:
+            source_path = source_path.join_within_root(relative_path)
+
+        vcs_url = self.repo_id.as_vcs_url_qualifier()
+        subpath = source_path.subpath_from_root
+        if subpath == Path("."):
+            return vcs_url
+        return f"{vcs_url}#{subpath.as_posix()}"
 
 
 def get_repo_id(repo: StrPath | GitRepo | git.Repo) -> RepoID:

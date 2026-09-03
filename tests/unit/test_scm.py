@@ -9,7 +9,14 @@ import git
 import pytest
 
 from hermeto.core.errors import FetchError, NotAGitRepo, UnsupportedFeature
-from hermeto.core.scm import RepoID, clone_as_tarball, get_repo_for_path, get_repo_id
+from hermeto.core.rooted_path import RootedPath
+from hermeto.core.scm import (
+    GitSourceLocation,
+    RepoID,
+    clone_as_tarball,
+    get_repo_for_path,
+    get_repo_id,
+)
 
 INITIAL_COMMIT = "78510c591e2be635b010a52a7048b562bad855a3"
 
@@ -81,6 +88,38 @@ class TestRepoID:
         commit_id = "abcdef1234"
         expect_vcs_url = "git+ssh://git@github.com/foo/bar.git@abcdef1234"
         assert RepoID(origin_url, commit_id).as_vcs_url_qualifier() == expect_vcs_url
+
+
+class TestGitSourceLocation:
+    @pytest.mark.parametrize(
+        "subpath,relative_path,expected",
+        [
+            pytest.param(Path("."), None, "git+https://github.com/foo/bar.git@abcdef1234"),
+            pytest.param(
+                Path("module"),
+                None,
+                "git+https://github.com/foo/bar.git@abcdef1234#module",
+            ),
+            pytest.param(
+                Path("module"),
+                Path("pkg/sub"),
+                "git+https://github.com/foo/bar.git@abcdef1234#module/pkg/sub",
+            ),
+        ],
+    )
+    def test_as_vcs_url_qualifier(
+        self,
+        subpath: Path,
+        relative_path: Path | None,
+        expected: str,
+        tmp_path: Path,
+    ) -> None:
+        source = GitSourceLocation(
+            RepoID("https://github.com/foo/bar.git", "abcdef1234"),
+            RootedPath(tmp_path).join_within_root(subpath),
+        )
+
+        assert source.as_vcs_url_qualifier(relative_path) == expected
 
 
 def test_clone_as_tarball(golang_repo_path: Path, tmp_path: Path) -> None:
