@@ -1,11 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-only
 from pathlib import Path
+from unittest import mock
 
 import git
 import pytest
 
 from hermeto.core.errors import FetchError
-from hermeto.core.package_managers.gomod.local import ModuleVersionResolver
+from hermeto.core.package_managers.gomod.local import (
+    LocalModuleResolver,
+    ModuleVersionResolver,
+)
 from hermeto.core.rooted_path import RootedPath
 from hermeto.core.scm import GitRepo
 from hermeto.core.utils import GIT_PRISTINE_ENV
@@ -188,3 +192,28 @@ def test_fetch_tags_fail(repo_remote_with_tag: tuple[RootedPath, RootedPath]) ->
     remote_repo_path, _ = repo_remote_with_tag
     with pytest.raises(FetchError):
         ModuleVersionResolver.from_repo_path(remote_repo_path)
+
+
+@mock.patch.object(ModuleVersionResolver, "from_repo_path")
+def test_reuses_version_resolver_for_modules_in_same_repository(
+    from_repo_path: mock.Mock,
+    rooted_tmp_path_repo: RootedPath,
+) -> None:
+    repo = GitRepo(rooted_tmp_path_repo)
+    repo.create_remote("origin", "https://example.com/example/repository.git")
+    module_dirs = [
+        rooted_tmp_path_repo.join_within_root("first"),
+        rooted_tmp_path_repo.join_within_root("second"),
+    ]
+    for module_dir in module_dirs:
+        module_dir.path.mkdir()
+
+    version_resolver = mock.Mock(spec=ModuleVersionResolver)
+    version_resolver.get_golang_version.return_value = "v1.0.0"
+    from_repo_path.return_value = version_resolver
+
+    resolver = LocalModuleResolver(rooted_tmp_path_repo)
+    resolver.resolve("example.com/first", module_dirs[0])
+    resolver.resolve("example.com/second", module_dirs[1])
+
+    from_repo_path.assert_called_once_with(rooted_tmp_path_repo)

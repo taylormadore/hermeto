@@ -3,19 +3,32 @@ import logging
 import re
 from datetime import datetime, timezone
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 import git
 import semver
 
-from hermeto.core.errors import FetchError, GitError
+from hermeto.core.config import get_config
+from hermeto.core.constants import Mode
+from hermeto.core.errors import FetchError, GitError, NotAGitRepo
 from hermeto.core.rooted_path import RootedPath
-from hermeto.core.scm import GitRepo
+from hermeto.core.scm import GitRepo, GitSourceLocation, get_repo_for_path, get_repo_id
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
 log = logging.getLogger(__name__)
+
+
+class LocalModuleResolution(NamedTuple):
+    """The version and Git source location resolved for a local Go module.
+
+    The source is absent only for non-Git input accepted in permissive mode.
+    """
+
+    version: str
+    source: GitSourceLocation | None
 
 
 class ModuleVersionResolver:
@@ -326,3 +339,58 @@ class ModuleVersionResolver:
             semantic_version = tag_name[1:]
 
         return semver.version.Version.parse(semantic_version)
+
+
+class LocalModuleResolver:
+    """Resolve versions and repository locations for modules in a request source tree."""
+
+    def __init__(self, source_dir: RootedPath) -> None:
+        """Initialize a resolver for the source tree in a request."""
+        self._source_dir = source_dir
+        self._version_resolvers: dict[Path, ModuleVersionResolver] = {}
+
+    def resolve(
+        self,
+        module_path: str,
+        module_dir: RootedPath,
+    ) -> LocalModuleResolution:
+        """Resolve the version and provenance of a local module."""
+        source_module_dir = self._source_dir.join_within_root(module_dir.path)
+
+        non_git_resolver = self._non_git_version_resolver
+        if non_git_resolver is not None:
+            version = non_git_resolver.get_golang_version(
+                module_path,
+                source_module_dir,
+            )
+            return LocalModuleResolution(version, None)
+
+        repo, repo_relative_path = get_repo_for_path(
+            self._source_dir.path,
+            source_module_dir.path,
+        )
+        repo_root = RootedPath(repo.working_dir)
+        source_path = repo_root.join_within_root(repo_relative_path)
+        version_resolver = self._get_version_resolver(repo_root)
+        version = version_resolver.get_golang_version(module_path, source_path)
+        source = GitSourceLocation(get_repo_id(repo), source_path)
+        return LocalModuleResolution(version, source)
+
+    @cached_property
+    def _non_git_version_resolver(self) -> ModuleVersionResolver | None:
+        """Return a version resolver when the request source is not a Git repository."""
+        try:
+            GitRepo(self._source_dir.path)
+        except NotAGitRepo:
+            if get_config().mode != Mode.PERMISSIVE:
+                raise
+            return ModuleVersionResolver.from_non_git_source()
+        return None
+
+    def _get_version_resolver(self, repo_root: RootedPath) -> ModuleVersionResolver:
+        """Return the cached version resolver for a repository, creating it if needed."""
+        version_resolver = self._version_resolvers.get(repo_root.path)
+        if version_resolver is None:
+            version_resolver = ModuleVersionResolver.from_repo_path(repo_root)
+            self._version_resolvers[repo_root.path] = version_resolver
+        return version_resolver
