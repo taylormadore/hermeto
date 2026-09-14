@@ -50,7 +50,7 @@ from hermeto.core.package_managers.gomod.main import (
     _vendor_change_list,
 )
 from hermeto.core.rooted_path import PathOutsideRoot, RootedPath
-from hermeto.core.scm import RepoID
+from hermeto.core.scm import GitSourceLocation, RepoID
 from tests.common_utils import GIT_REF, write_file_tree
 
 GO_CMD_PATH = "/usr/bin/go"
@@ -282,18 +282,19 @@ def test_process_modules_json_stream(
 
 
 @pytest.mark.parametrize("has_workspaces", (False, True))
+@mock.patch("hermeto.core.package_managers.gomod.main._get_source_location")
 @mock.patch("hermeto.core.package_managers.gomod.main.ModuleVersionResolver")
-@mock.patch("hermeto.core.package_managers.gomod.main.get_repo_id")
 def test_create_modules_from_parsed_data(
-    mock_get_repo_id: mock.Mock,
     mock_version_resolver: mock.Mock,
+    mock_get_source_location: mock.Mock,
     has_workspaces: bool,
     rooted_tmp_path: RootedPath,
 ) -> None:
     main_module_dir = rooted_tmp_path.join_within_root("target-module")
     mock_version_resolver.get_golang_version.return_value = "v1.5.0"
 
-    mock_get_repo_id.return_value = None
+    source = GitSourceLocation(RepoID("https://github.com/org/repo.git", GIT_REF), rooted_tmp_path)
+    mock_get_source_location.return_value = source
 
     go_work = None
 
@@ -366,6 +367,7 @@ def test_create_modules_from_parsed_data(
             original_name="github.com/some-org/this-other-module",
             real_path="github.com/my-org/my-repo/target-module/local-path",
             local_replace=True,
+            source=source,
         ),
         Module(
             name="github.com/some-org/yet-another-module",
@@ -373,6 +375,7 @@ def test_create_modules_from_parsed_data(
             original_name="github.com/some-org/yet-another-module",
             real_path="github.com/my-org/my-repo/sibling-path",
             local_replace=True,
+            source=source,
         ),
     ]
 
