@@ -118,7 +118,6 @@ class Module(NamedTuple):
 
     name: the resolved name for this module
     original_name: module's name as written in go.mod, before any replacement
-    real_path: real path to locate the package on the Internet, which might differ from its name
     version: the resolved version for this module
     main: if this is the main module in the repository subpath that is being processed
     missing_hash_in_file: path (relative to repository root) to the go.sum file which should have
@@ -131,7 +130,6 @@ class Module(NamedTuple):
 
     name: str
     original_name: str
-    real_path: str
     version: str
     main: bool = False
     missing_hash_in_file: Path | None = None
@@ -144,7 +142,7 @@ class Module(NamedTuple):
         """Get the purl for this module."""
         purl = PackageURL(
             type="golang",
-            name=self.real_path,
+            name=self.name,
             version=self.version,
             qualifiers={"type": "module"} | _vcs_url_if_needed(self),
         )
@@ -194,19 +192,11 @@ class Package(NamedTuple):
         return self.module.name
 
     @property
-    def real_path(self) -> str:
-        """Get the real path to locate this package on the Internet."""
-        if self.relative_path:
-            return f"{self.module.real_path}/{self.relative_path}"
-
-        return self.module.real_path
-
-    @property
     def purl(self) -> str:
         """Get the purl for this package."""
         purl = PackageURL(
             type="golang",
-            name=self.real_path,
+            name=self.name,
             version=self.module.version,
             qualifiers={"type": "package"} | _vcs_url_if_needed(self.module),
         )
@@ -311,7 +301,6 @@ def _get_proxy_for_module(module: ParsedModule) -> list[str] | None:
 
 
 def _create_modules_from_parsed_data(
-    main_module: Module,
     main_module_dir: RootedPath,
     parsed_modules: Iterable[ParsedModule],
     modules_in_go_sum: frozenset[ModuleID],
@@ -327,7 +316,6 @@ def _create_modules_from_parsed_data(
         source, proxy, local_replace = None, None, False
         if not version_or_path.startswith("."):
             version = version_or_path
-            real_path = name
             proxy = _get_proxy_for_module(module)
 
             if mod_id not in modules_in_go_sum:
@@ -342,7 +330,6 @@ def _create_modules_from_parsed_data(
             # module/name v1.0.0 => ./local/path
             resolved_replacement_path = main_module_dir.join_within_root(version_or_path)
             version = version_resolver.get_golang_version(module.path, resolved_replacement_path)
-            real_path = _resolve_path_for_local_replacement(module)
             local_replace = True
             source = _get_source_location(main_module_dir)
 
@@ -350,23 +337,11 @@ def _create_modules_from_parsed_data(
             name=name,
             version=version,
             original_name=original_name,
-            real_path=real_path,
             missing_hash_in_file=missing_hash_in_file,
             proxy=proxy,
             local_replace=local_replace,
             source=source,
         )
-
-    def _resolve_path_for_local_replacement(module: ParsedModule) -> str:
-        """Resolve all instances of "." and ".." for a local replacement."""
-        if not module.replace:
-            # Should not happen, this function will only be called for replaced modules
-            raise RuntimeError("Can't resolve path for a module that was not replaced")
-
-        path = f"{main_module.real_path}/{module.replace.path}"
-
-        platform_specific_path = os.path.normpath(path)
-        return Path(platform_specific_path).as_posix()
 
     return [_create_module(module) for module in parsed_modules]
 
@@ -469,7 +444,6 @@ def fetch_gomod_source(request: Request) -> RequestOutput:
     components: list[Component] = []
     annotations: list[Annotation] = []
 
-    repo_name = _get_repository_name(request.source_dir)
     try:
         version_resolver = ModuleVersionResolver.from_repo_path(request.source_dir)
     except NotAGitRepo:
@@ -530,13 +504,12 @@ def fetch_gomod_source(request: Request) -> RequestOutput:
                     )
 
             main_module = _create_main_module_from_parsed_data(
-                main_module_dir, repo_name, resolve_result.parsed_main_module
+                main_module_dir, resolve_result.parsed_main_module
             )
 
             modules = [main_module]
             modules.extend(
                 _create_modules_from_parsed_data(
-                    main_module,
                     main_module_dir,
                     resolve_result.parsed_modules,
                     resolve_result.modules_in_go_sum,
@@ -591,48 +564,26 @@ def fetch_gomod_source(request: Request) -> RequestOutput:
 
 
 def _create_main_module_from_parsed_data(
-    main_module_dir: RootedPath, repo_name: str | None, parsed_main_module: ParsedModule
+    main_module_dir: RootedPath, parsed_main_module: ParsedModule
 ) -> Module:
-    resolved_subpath = main_module_dir.subpath_from_root
-
-    if repo_name is None:
-        # PERMISSIVE mode without git repo - use the module path as resolved_path
-        resolved_path = parsed_main_module.path
+    try:
+        source = _get_source_location(main_module_dir)
+    except NotAGitRepo:
+        if get_config().mode != Mode.PERMISSIVE:
+            raise
         source = None
-    elif str(resolved_subpath) == ".":
-        resolved_path = repo_name
-        source = _get_source_location(main_module_dir)
-    else:
-        resolved_path = f"{repo_name}/{resolved_subpath}"
-        source = _get_source_location(main_module_dir)
 
     if not parsed_main_module.version:
         # Should not happen, since the version is always resolved from the Git repo
-        raise RuntimeError(f"Version was not identified for main module at {resolved_subpath}")
+        raise RuntimeError(f"Version was not identified for main module at {main_module_dir}")
 
     return Module(
         name=parsed_main_module.path,
         original_name=parsed_main_module.path,
         version=parsed_main_module.version,
-        real_path=resolved_path,
         main=True,
         source=source,
     )
-
-
-def _get_repository_name(source_dir: RootedPath) -> str | None:
-    """Return the name resolved from the Git origin URL.
-
-    The name is a treated form of the URL, after stripping the scheme, user and .git extension.
-    """
-    try:
-        repo_id = get_repo_id(source_dir)
-    except NotAGitRepo:
-        if get_config().mode == Mode.PERMISSIVE:
-            return None
-        raise
-    url = repo_id.parsed_origin_url
-    return f"{url.hostname}{url.path.rstrip('/').removesuffix('.git')}"
 
 
 def _protect_against_symlinks(app_dir: RootedPath) -> None:

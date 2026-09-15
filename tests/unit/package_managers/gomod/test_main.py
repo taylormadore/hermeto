@@ -9,12 +9,11 @@ from unittest import mock
 import git
 import pytest
 
-from hermeto.core.constants import Mode
 from hermeto.core.errors import (
-    NotAGitRepo,
     UnexpectedFormat,
 )
 from hermeto.core.models.input import Request
+from hermeto.core.models.property_semantics import Property, PropertyEnum
 from hermeto.core.models.sbom import (
     PROXY_COMMENT,
     PROXY_REF_TYPE,
@@ -35,13 +34,11 @@ from hermeto.core.package_managers.gomod.main import (
     ParsedOrigin,
     ParsedPackage,
     StandardPackage,
-    _create_main_module_from_parsed_data,
     _create_modules_from_parsed_data,
     _create_packages_from_parsed_data,
     _deduplicate_resolved_modules,
     _disable_telemetry,
     _get_proxy_for_module,
-    _get_repository_name,
     _parse_go_sum,
     _parse_vendor,
     _process_modules_json_stream,
@@ -298,15 +295,6 @@ def test_create_modules_from_parsed_data(
 
     go_work = None
 
-    main_module = Module(
-        name="github.com/my-org/my-repo/target-module",
-        version="v1.5.0",
-        original_name="github.com/my-org/my-repo/target-module",
-        real_path="github.com/my-org/my-repo/target-module",
-        main=True,
-        local_replace=False,
-    )
-
     parsed_modules = [
         # simple module
         ParsedModule(
@@ -352,20 +340,17 @@ def test_create_modules_from_parsed_data(
             name="golang.org/a/standard-module",
             version="v0.0.0-20190311183353-d8887717615a",
             original_name="golang.org/a/standard-module",
-            real_path="golang.org/a/standard-module",
         ),
         Module(
             name="github.com/another-org/useful-module",
             version="v2.0.0",
             original_name="github.com/a-neat-org/useful-module",
-            real_path="github.com/another-org/useful-module",
             missing_hash_in_file=Path("target-module/go.sum"),
         ),
         Module(
             name="github.com/some-org/this-other-module",
             version="v1.5.0",
             original_name="github.com/some-org/this-other-module",
-            real_path="github.com/my-org/my-repo/target-module/local-path",
             local_replace=True,
             source=source,
         ),
@@ -373,7 +358,6 @@ def test_create_modules_from_parsed_data(
             name="github.com/some-org/yet-another-module",
             version="v1.5.0",
             original_name="github.com/some-org/yet-another-module",
-            real_path="github.com/my-org/my-repo/sibling-path",
             local_replace=True,
             source=source,
         ),
@@ -388,12 +372,10 @@ def test_create_modules_from_parsed_data(
             name="github.com/another-org/useful-module",
             version="v2.0.0",
             original_name="github.com/a-neat-org/useful-module",
-            real_path="github.com/another-org/useful-module",
             missing_hash_in_file=Path("workspace_dir/go.work.sum"),
         )
 
     modules = _create_modules_from_parsed_data(
-        main_module,
         main_module_dir,
         parsed_modules,
         modules_in_go_sum,
@@ -404,29 +386,195 @@ def test_create_modules_from_parsed_data(
     assert modules == expect_modules
 
 
-def test_module_to_component() -> None:
-    expected_component = Component(
-        name="github.com/another-org/nice-repo",
-        version="v0.0.1",
-        purl="pkg:golang/github.com/another-org/nice-repo@v0.0.1?type=module",
-        external_references=[
-            ExternalReference(
-                url="https://goproxy.corp.example.com",
-                type=PROXY_REF_TYPE,
-                comment=PROXY_COMMENT,
-            )
-        ],
-    )
+@pytest.mark.parametrize(
+    ("module", "expected_component"),
+    [
+        pytest.param(
+            Module(
+                name="example.com/dependency",
+                version="v1.2.3",
+                original_name="example.com/dependency",
+            ),
+            Component(
+                name="example.com/dependency",
+                version="v1.2.3",
+                purl="pkg:golang/example.com/dependency@v1.2.3?type=module",
+            ),
+            id="regular-dependency",
+        ),
+        pytest.param(
+            Module(
+                name="example.com/replacement",
+                version="v2.0.0",
+                original_name="example.com/requested",
+            ),
+            Component(
+                name="example.com/replacement",
+                version="v2.0.0",
+                purl="pkg:golang/example.com/replacement@v2.0.0?type=module",
+            ),
+            id="versioned-replacement",
+        ),
+        pytest.param(
+            Module(
+                name="example.com/project",
+                version="v1.5.0",
+                original_name="example.com/project",
+                main=True,
+                source=GitSourceLocation(
+                    RepoID("https://github.com/acme/project.git", GIT_REF),
+                    RootedPath("/source-repo"),
+                ),
+            ),
+            Component(
+                name="example.com/project",
+                version="v1.5.0",
+                purl=(
+                    "pkg:golang/example.com/project@v1.5.0?"
+                    f"type=module&vcs_url=git%2Bhttps://github.com/acme/project.git%40{GIT_REF}"
+                ),
+            ),
+            id="main-module-with-distinct-repository",
+        ),
+        pytest.param(
+            Module(
+                name="example.com/proxied-dependency",
+                version="v3.0.0",
+                original_name="example.com/proxied-dependency",
+                proxy=["https://goproxy.corp.example.com"],
+            ),
+            Component(
+                name="example.com/proxied-dependency",
+                version="v3.0.0",
+                purl="pkg:golang/example.com/proxied-dependency@v3.0.0?type=module",
+                external_references=[
+                    ExternalReference(
+                        url="https://goproxy.corp.example.com",
+                        type=PROXY_REF_TYPE,
+                        comment=PROXY_COMMENT,
+                    )
+                ],
+            ),
+            id="dependency-with-custom-proxy",
+        ),
+        pytest.param(
+            Module(
+                name="example.com/unverified-dependency",
+                version="v4.0.0",
+                original_name="example.com/unverified-dependency",
+                missing_hash_in_file=Path("go.sum"),
+            ),
+            Component(
+                name="example.com/unverified-dependency",
+                version="v4.0.0",
+                purl="pkg:golang/example.com/unverified-dependency@v4.0.0?type=module",
+                properties=[Property(name=PropertyEnum.PROP_MISSING_HASH_IN_FILE, value="go.sum")],
+            ),
+            id="dependency-with-missing-checksum",
+        ),
+    ],
+)
+def test_module_to_component(module: Module, expected_component: Component) -> None:
+    assert module.to_component() == expected_component
 
-    component = Module(
-        name="github.com/another-org/nice-repo",
-        version="v0.0.1",
-        original_name="github.com/my-org/nice-repo",
-        real_path="github.com/another-org/nice-repo",
-        proxy=["https://goproxy.corp.example.com"],
-    ).to_component()
 
-    assert component == expected_component
+@pytest.mark.parametrize(
+    ("module", "relative_path", "expected_component"),
+    [
+        pytest.param(
+            Module(
+                name="example.com/dependency",
+                version="v1.2.3",
+                original_name="example.com/dependency",
+            ),
+            "",
+            Component(
+                name="example.com/dependency",
+                version="v1.2.3",
+                purl="pkg:golang/example.com/dependency@v1.2.3?type=package",
+            ),
+            id="module-root-package",
+        ),
+        pytest.param(
+            Module(
+                name="example.com/dependency",
+                version="v1.2.3",
+                original_name="example.com/dependency",
+            ),
+            "sub",
+            Component(
+                name="example.com/dependency/sub",
+                version="v1.2.3",
+                purl="pkg:golang/example.com/dependency/sub@v1.2.3?type=package",
+            ),
+            id="regular-dependency-subpackage",
+        ),
+        pytest.param(
+            Module(
+                name="example.com/replacement",
+                version="v2.0.0",
+                original_name="example.com/requested",
+            ),
+            "sub",
+            Component(
+                name="example.com/replacement/sub",
+                version="v2.0.0",
+                purl="pkg:golang/example.com/replacement/sub@v2.0.0?type=package",
+            ),
+            id="versioned-replacement-subpackage",
+        ),
+        pytest.param(
+            Module(
+                name="example.com/local-library",
+                version="v2.0.0",
+                original_name="example.com/local-library",
+                local_replace=True,
+                source=GitSourceLocation(
+                    RepoID("https://github.com/acme/application.git", GIT_REF),
+                    RootedPath("/source-repo"),
+                ),
+            ),
+            "sub",
+            Component(
+                name="example.com/local-library/sub",
+                version="v2.0.0",
+                purl=(
+                    "pkg:golang/example.com/local-library/sub@v2.0.0?"
+                    f"type=package&vcs_url=git%2Bhttps://github.com/acme/application.git%40{GIT_REF}"
+                ),
+            ),
+            id="local-path-replacement-subpackage",
+        ),
+        pytest.param(
+            Module(
+                name="example.com/proxied-dependency",
+                version="v3.0.0",
+                original_name="example.com/proxied-dependency",
+                proxy=["https://goproxy.corp.example.com"],
+            ),
+            "sub",
+            Component(
+                name="example.com/proxied-dependency/sub",
+                version="v3.0.0",
+                purl="pkg:golang/example.com/proxied-dependency/sub@v3.0.0?type=package",
+                external_references=[
+                    ExternalReference(
+                        url="https://goproxy.corp.example.com",
+                        type=PROXY_REF_TYPE,
+                        comment=PROXY_COMMENT,
+                    )
+                ],
+            ),
+            id="dependency-subpackage-with-custom-proxy",
+        ),
+    ],
+)
+def test_package_to_component(
+    module: Module,
+    relative_path: str,
+    expected_component: Component,
+) -> None:
+    assert Package(relative_path=relative_path, module=module).to_component() == expected_component
 
 
 @pytest.mark.parametrize(
@@ -467,26 +615,22 @@ def test_create_packages_from_parsed_data() -> None:
             name="github.com/my-org/my-repo",
             version="v1.5.0",
             original_name="github.com/my-org/my-repo",
-            real_path="github.com/my-org/my-repo",
             main=True,
         ),
         Module(
             name="github.com/my-org/my-repo/child-module",
             version="v1.0.1",
             original_name="github.com/my-org/my-repo/child-module",
-            real_path="github.com/my-org/my-repo/child-module",
         ),
         Module(
             name="github.com/stretchr/testify",
             version="v1.7.1",
             original_name="github.com/stretchr/testify",
-            real_path="github.com/stretchr/testify",
         ),
         Module(
             name="github.com/release-engineering/retrodep/v2",
             version="v2.0.0",
             original_name="github.com/containerbuildsystem/retrodep/v2",
-            real_path="github.com/release-engineering/retrodep/v2",
         ),
     ]
 
@@ -527,7 +671,6 @@ def test_create_packages_from_parsed_data() -> None:
                 name="github.com/stretchr/testify",
                 version="v1.7.1",
                 original_name="github.com/stretchr/testify",
-                real_path="github.com/stretchr/testify",
             ),
         ),
         Package(
@@ -536,7 +679,6 @@ def test_create_packages_from_parsed_data() -> None:
                 name="github.com/my-org/my-repo",
                 version="v1.5.0",
                 original_name="github.com/my-org/my-repo",
-                real_path="github.com/my-org/my-repo",
                 main=True,
             ),
         ),
@@ -546,7 +688,6 @@ def test_create_packages_from_parsed_data() -> None:
                 name="github.com/release-engineering/retrodep/v2",
                 version="v2.0.0",
                 original_name="github.com/containerbuildsystem/retrodep/v2",
-                real_path="github.com/release-engineering/retrodep/v2",
             ),
         ),
         Package(
@@ -555,7 +696,6 @@ def test_create_packages_from_parsed_data() -> None:
                 name="github.com/my-org/my-repo/child-module",
                 version="v1.0.1",
                 original_name="github.com/my-org/my-repo/child-module",
-                real_path="github.com/my-org/my-repo/child-module",
             ),
         ),
     ]
@@ -774,101 +914,6 @@ def test_vendor_changed(
 
     # The _vendor_change_list function should reset the `git add` => added files should not be tracked
     assert not repo.git.diff("--diff-filter", DIFF_ADDED)
-
-
-@pytest.mark.parametrize(
-    "input_url",
-    (
-        "ssh://github.com/hermetoproject/integration-tests",
-        "ssh://username@github.com/hermetoproject/integration-tests",
-        "github.com:hermetoproject/integration-tests.git",
-        "username@github.com:hermetoproject/integration-tests.git/",
-        "https://github.com/hermetoproject/integration-tests",
-        "https://github.com/hermetoproject/integration-tests.git",
-        "https://github.com/hermetoproject/integration-tests.git/",
-    ),
-)
-@mock.patch("hermeto.core.scm.GitRepo")
-def test_get_repository_name(mock_git_repo: Any, input_url: str) -> None:
-    expected_url = "github.com/hermetoproject/integration-tests"
-
-    mocked_repo = mock.Mock()
-    mocked_repo.remote.return_value.url = input_url
-    mocked_repo.head.commit.hexsha = GIT_REF
-    mock_git_repo.return_value = mocked_repo
-
-    resolved_url = _get_repository_name(RootedPath("/my-folder/cloned-repo"))
-
-    assert resolved_url == expected_url
-
-
-@mock.patch("hermeto.core.package_managers.gomod.main.get_repo_id")
-@mock.patch("hermeto.core.package_managers.gomod.main.get_config")
-def test_get_repository_name_permissive_mode(
-    mock_get_config: mock.Mock,
-    mock_get_repo_id: mock.Mock,
-    rooted_tmp_path: RootedPath,
-) -> None:
-    """Test that _get_repository_name returns None in PERMISSIVE mode when not a git repo."""
-    mock_get_repo_id.side_effect = NotAGitRepo("Not a git repo", solution="N/A")
-    mock_get_config.return_value.mode = Mode.PERMISSIVE
-
-    result = _get_repository_name(rooted_tmp_path)
-
-    assert result is None
-
-
-@mock.patch("hermeto.core.package_managers.gomod.main.get_repo_id")
-@mock.patch("hermeto.core.package_managers.gomod.main.get_config")
-def test_get_repository_name_strict_mode_raises_without_git_repo(
-    mock_get_config: mock.Mock,
-    mock_get_repo_id: mock.Mock,
-    rooted_tmp_path: RootedPath,
-) -> None:
-    """Test that _get_repository_name re-raises NotAGitRepo in STRICT mode."""
-    mock_get_repo_id.side_effect = NotAGitRepo("Not a git repo", solution="N/A")
-    mock_get_config.return_value.mode = Mode.STRICT
-
-    with pytest.raises(NotAGitRepo):
-        _get_repository_name(rooted_tmp_path)
-
-
-@mock.patch("hermeto.core.package_managers.gomod.main.get_repo_id")
-@mock.patch("hermeto.core.package_managers.gomod.main.get_config")
-def test_get_repository_name_permissive_mode_with_git_repo(
-    mock_get_config: mock.Mock,
-    mock_get_repo_id: mock.Mock,
-    rooted_tmp_path_repo: RootedPath,
-) -> None:
-    """Test that _get_repository_name returns repo name in PERMISSIVE mode when git repo is available."""
-    repo = git.Repo(rooted_tmp_path_repo)
-    repo.create_remote("origin", "https://github.com/org/repo.git")
-
-    repo_id = RepoID("https://github.com/org/repo.git", repo.head.commit.hexsha)
-    mock_get_repo_id.return_value = repo_id
-    mock_get_config.return_value.mode = Mode.PERMISSIVE
-
-    result = _get_repository_name(rooted_tmp_path_repo)
-
-    assert result == "github.com/org/repo"
-
-
-def test_create_main_module_from_parsed_data_repo_name_none(
-    rooted_tmp_path: RootedPath,
-) -> None:
-    """PERMISSIVE mode without a git repo: resolved_path falls back to the module path."""
-    parsed_main_module = ParsedModule(path="example.com/org/myapp", version="v1.2.3")
-    main_module_dir = rooted_tmp_path  # subpath_from_root == "."
-
-    module = _create_main_module_from_parsed_data(
-        main_module_dir=main_module_dir,
-        repo_name=None,
-        parsed_main_module=parsed_main_module,
-    )
-
-    assert module.real_path == "example.com/org/myapp"
-    assert module.name == "example.com/org/myapp"
-    assert module.version == "v1.2.3"
 
 
 @pytest.mark.parametrize(
