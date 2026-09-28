@@ -191,11 +191,12 @@ class Package(NamedTuple):
     @property
     def purl(self) -> str:
         """Get the purl for this package."""
+        source_relative_path = Path(self.relative_path) if self.relative_path else None
         purl = PackageURL(
             type="golang",
             name=self.name,
             version=self.module.version,
-            qualifiers={"type": "package"} | _vcs_url_if_needed(self.module),
+            qualifiers={"type": "package"} | _vcs_url_if_needed(self.module, source_relative_path),
         )
         return purl.to_string()
 
@@ -209,12 +210,15 @@ class Package(NamedTuple):
         )
 
 
-def _vcs_url_if_needed(module: Module) -> dict[str, str]:
+def _vcs_url_if_needed(
+    module: Module,
+    relative_path: Path | None = None,
+) -> dict[str, str]:
     """Determine whether a vcs_url qualifier is necessary and provide one."""
     if module.source is not None:
         # Locally sourced modules are consumed from a Git working tree, so their repository
         # provenance needs to be included in the PURL.
-        return {"vcs_url": module.source.as_vcs_url_qualifier()}
+        return {"vcs_url": module.source.as_vcs_url_qualifier(relative_path)}
     return dict()
 
 

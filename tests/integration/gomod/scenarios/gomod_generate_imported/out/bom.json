@@ -23,8 +23,8 @@
         "pkg:golang/encoding?type=package",
         "pkg:golang/errors?type=package",
         "pkg:golang/fmt?type=package",
-        "pkg:golang/github.com/hermetoproject/integration-tests/foobar@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee",
-        "pkg:golang/github.com/hermetoproject/integration-tests/internal/generate@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee",
+        "pkg:golang/github.com/hermetoproject/integration-tests/foobar@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee%23foobar",
+        "pkg:golang/github.com/hermetoproject/integration-tests/internal/generate@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee%23internal/generate",
         "pkg:golang/github.com/hermetoproject/integration-tests@v0.0.0-19700101000000-d60957d00fa6?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee",
         "pkg:golang/github.com/hermetoproject/integration-tests@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee",
         "pkg:golang/internal/abi?type=package",
@@ -286,7 +286,7 @@
       "type": "library"
     },
     {
-      "bom-ref": "pkg:golang/github.com/hermetoproject/integration-tests/foobar@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee",
+      "bom-ref": "pkg:golang/github.com/hermetoproject/integration-tests/foobar@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee%23foobar",
       "name": "github.com/hermetoproject/integration-tests/foobar",
       "properties": [
         {
@@ -294,12 +294,12 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/github.com/hermetoproject/integration-tests/foobar@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee",
+      "purl": "pkg:golang/github.com/hermetoproject/integration-tests/foobar@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee%23foobar",
       "type": "library",
       "version": "v0.0.0-19700101000000-d60957d00fa6"
     },
     {
-      "bom-ref": "pkg:golang/github.com/hermetoproject/integration-tests/internal/generate@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee",
+      "bom-ref": "pkg:golang/github.com/hermetoproject/integration-tests/internal/generate@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee%23internal/generate",
       "name": "github.com/hermetoproject/integration-tests/internal/generate",
       "properties": [
         {
@@ -307,7 +307,7 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/github.com/hermetoproject/integration-tests/internal/generate@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee",
+      "purl": "pkg:golang/github.com/hermetoproject/integration-tests/internal/generate@v0.0.0-19700101000000-d60957d00fa6?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%40d60957d00fa663b49a13f2007a75e15ad8a932ee%23internal/generate",
       "type": "library",
       "version": "v0.0.0-19700101000000-d60957d00fa6"
     },

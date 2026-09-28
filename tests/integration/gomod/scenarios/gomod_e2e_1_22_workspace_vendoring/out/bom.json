@@ -107,7 +107,7 @@
         "pkg:golang/github.com/davecgh/go-spew@v1.1.1?type=module",
         "pkg:golang/github.com/golang-jwt/jwt@v3.2.2%2Bincompatible?type=module",
         "pkg:golang/github.com/golang-jwt/jwt@v3.2.2%2Bincompatible?type=package",
-        "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-9767c825015e?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%409767c825015e6632ed601cf802ea375bbb652eb9%23echo",
+        "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-9767c825015e?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%409767c825015e6632ed601cf802ea375bbb652eb9%23echo/middleware",
         "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-9767c825015e?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%409767c825015e6632ed601cf802ea375bbb652eb9%23echo",
         "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-9767c825015e?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%409767c825015e6632ed601cf802ea375bbb652eb9%23echo",
         "pkg:golang/github.com/labstack/gommon/bytes@v0.4.2?type=package",
@@ -1478,7 +1478,7 @@
       "version": "v3.2.2+incompatible"
     },
     {
-      "bom-ref": "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-9767c825015e?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%409767c825015e6632ed601cf802ea375bbb652eb9%23echo",
+      "bom-ref": "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-9767c825015e?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%409767c825015e6632ed601cf802ea375bbb652eb9%23echo/middleware",
       "name": "github.com/labstack/echo/v4/middleware",
       "properties": [
         {
@@ -1486,7 +1486,7 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-9767c825015e?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%409767c825015e6632ed601cf802ea375bbb652eb9%23echo",
+      "purl": "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-9767c825015e?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%409767c825015e6632ed601cf802ea375bbb652eb9%23echo/middleware",
       "type": "library",
       "version": "v4.0.0-19700101000000-9767c825015e"
     },

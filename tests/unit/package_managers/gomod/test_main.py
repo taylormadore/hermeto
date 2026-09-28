@@ -596,13 +596,35 @@ def test_module_to_component(module: Module, expected_component: Component) -> N
                     RootedPath("/source-repo"),
                 ),
             ),
+            "",
+            Component(
+                name="example.com/local-library",
+                version="v2.0.0",
+                purl=(
+                    "pkg:golang/example.com/local-library@v2.0.0?"
+                    f"type=package&vcs_url=git%2Bhttps://github.com/acme/application.git%40{GIT_REF}"
+                ),
+            ),
+            id="local-module-root-package",
+        ),
+        pytest.param(
+            Module(
+                name="example.com/local-library",
+                version="v2.0.0",
+                original_name="example.com/local-library",
+                source=GitSourceLocation(
+                    RepoID("https://github.com/acme/application.git", GIT_REF),
+                    RootedPath("/source-repo").join_within_root("local-library"),
+                ),
+            ),
             "sub",
             Component(
                 name="example.com/local-library/sub",
                 version="v2.0.0",
                 purl=(
                     "pkg:golang/example.com/local-library/sub@v2.0.0?"
-                    f"type=package&vcs_url=git%2Bhttps://github.com/acme/application.git%40{GIT_REF}"
+                    "type=package&vcs_url=git%2Bhttps://github.com/acme/application.git%40"
+                    f"{GIT_REF}%23local-library/sub"
                 ),
             ),
             id="local-path-replacement-subpackage",
