@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+import json
 import os
 import textwrap
 from collections.abc import Iterator
@@ -24,7 +25,6 @@ from hermeto.core.package_managers.gomod.go import (
     Go,
     GoWork,
 )
-from hermeto.core.package_managers.gomod.local import ModuleVersionResolver
 from hermeto.core.package_managers.gomod.main import (
     Module,
     ModuleDict,
@@ -40,6 +40,7 @@ from hermeto.core.package_managers.gomod.main import (
     _disable_telemetry,
     _get_proxy_for_module,
     _parse_go_sum,
+    _parse_local_modules,
     _parse_vendor,
     _process_modules_json_stream,
     _resolve_gomod,
@@ -112,13 +113,12 @@ def test_resolve_gomod_suspicious_symlinks(symlinked_file: str, gomod_request: R
     tmp_path = gomod_request.source_dir.path
     tmp_path.joinpath(symlinked_file).parent.mkdir(parents=True, exist_ok=True)
     tmp_path.joinpath(symlinked_file).symlink_to("/foo")
-    version_resolver = mock.Mock(spec=ModuleVersionResolver)
     go_work = mock.Mock(spec=GoWork)
 
     app_dir = gomod_request.source_dir
 
     with pytest.raises(PathOutsideRoot):
-        _resolve_gomod(app_dir, gomod_request, tmp_path, version_resolver, Go(), go_work)
+        _resolve_gomod(app_dir, gomod_request, tmp_path, Go(), go_work)
 
 
 @pytest.mark.parametrize(
@@ -276,6 +276,28 @@ def test_process_modules_json_stream(
     result = _process_modules_json_stream(app_dir, stream)
 
     assert result == expected_modules
+
+
+def test_parse_local_modules_preserves_main_module_data(rooted_tmp_path: RootedPath) -> None:
+    module_dir = rooted_tmp_path.join_within_root("nested/module")
+    module_dir.path.mkdir(parents=True)
+    go = mock.Mock(spec=Go)
+    go.return_value = json.dumps(
+        {
+            "Path": "example.com/declared-module",
+            "Main": True,
+            "Dir": str(module_dir),
+        }
+    )
+
+    main_module, workspace_modules = _parse_local_modules(None, go, {}, module_dir)
+
+    assert main_module == ParsedModule(
+        path="example.com/declared-module",
+        main=True,
+        local_path=RootedPath(module_dir.path),
+    )
+    assert workspace_modules == []
 
 
 @pytest.mark.parametrize("has_workspaces", (False, True))

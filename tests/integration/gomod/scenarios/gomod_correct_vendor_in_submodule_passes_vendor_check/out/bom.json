@@ -10,8 +10,8 @@
         "pkg:golang/bytes?type=package",
         "pkg:golang/cmp?type=package",
         "pkg:golang/errors?type=package",
-        "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-a23be1f80ada?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
-        "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-a23be1f80ada?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
+        "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-32807e6de3c1?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
+        "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-32807e6de3c1?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
         "pkg:golang/fmt?type=package",
         "pkg:golang/golang.org/x/text/internal/tag@v0.0.0-20170915032832-14c0d48ead0c?type=package",
         "pkg:golang/golang.org/x/text/language@v0.0.0-20170915032832-14c0d48ead0c?type=package",
@@ -122,7 +122,7 @@
       "type": "library"
     },
     {
-      "bom-ref": "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-a23be1f80ada?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
+      "bom-ref": "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-32807e6de3c1?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
       "name": "example.com/gomod-vendor-check-pass",
       "properties": [
         {
@@ -130,12 +130,12 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-a23be1f80ada?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
+      "purl": "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-32807e6de3c1?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
       "type": "library",
-      "version": "v0.0.0-19700101000000-a23be1f80ada"
+      "version": "v0.0.0-19700101000000-32807e6de3c1"
     },
     {
-      "bom-ref": "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-a23be1f80ada?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
+      "bom-ref": "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-32807e6de3c1?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
       "name": "example.com/gomod-vendor-check-pass",
       "properties": [
         {
@@ -143,9 +143,9 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-a23be1f80ada?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
+      "purl": "pkg:golang/example.com/gomod-vendor-check-pass@v0.0.0-19700101000000-32807e6de3c1?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/submodules/integration-tests.git%4032807e6de3c1c2cd85e2d28030fa1a272cbc1758",
       "type": "library",
-      "version": "v0.0.0-19700101000000-a23be1f80ada"
+      "version": "v0.0.0-19700101000000-32807e6de3c1"
     },
     {
       "bom-ref": "pkg:golang/fmt?type=package",

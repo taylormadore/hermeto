@@ -52,7 +52,7 @@ from hermeto.core.package_managers.gomod.go import (
     _ParsedModel,
     _select_toolchain,
 )
-from hermeto.core.package_managers.gomod.local import ModuleVersionResolver
+from hermeto.core.package_managers.gomod.local import LocalModuleResolver, ModuleVersionResolver
 from hermeto.core.package_managers.gomod.utils import _clean_go_modcache, _go_exec_env
 from hermeto.core.rooted_path import RootedPath
 from hermeto.core.scm import GitRepo, GitSourceLocation, get_repo_for_path, get_repo_id
@@ -90,6 +90,7 @@ class ParsedModule(_ParsedModel):
     main: bool = False
     replace: Optional["ParsedModule"] = None
     origin: Optional[ParsedOrigin] = None
+    local_path: RootedPath | None = None
 
 
 class ParsedPackage(_ParsedModel):
@@ -452,6 +453,8 @@ def fetch_gomod_source(request: Request) -> RequestOutput:
         else:
             raise
 
+    local_module_resolver = LocalModuleResolver(request.source_dir)
+
     gomod_download_dir = request.output_dir.join_within_root("deps/gomod/pkg/mod/cache/download")
     gomod_download_dir.path.mkdir(exist_ok=True, parents=True)
 
@@ -475,7 +478,7 @@ def fetch_gomod_source(request: Request) -> RequestOutput:
 
             try:
                 resolve_result = _resolve_gomod(
-                    main_module_dir, request, Path(tmp_dir.name), version_resolver, go, go_work
+                    main_module_dir, request, Path(tmp_dir.name), go, go_work
                 )
             except PackageManagerError:
                 log.error("Failed to fetch gomod dependencies")
@@ -504,7 +507,7 @@ def fetch_gomod_source(request: Request) -> RequestOutput:
                     )
 
             main_module = _create_main_module_from_parsed_data(
-                main_module_dir, resolve_result.parsed_main_module
+                local_module_resolver, resolve_result.parsed_main_module
             )
 
             modules = [main_module]
@@ -564,25 +567,25 @@ def fetch_gomod_source(request: Request) -> RequestOutput:
 
 
 def _create_main_module_from_parsed_data(
-    main_module_dir: RootedPath, parsed_main_module: ParsedModule
+    local_module_resolver: LocalModuleResolver,
+    parsed_main_module: ParsedModule,
 ) -> Module:
-    try:
-        source = _get_source_location(main_module_dir)
-    except NotAGitRepo:
-        if get_config().mode != Mode.PERMISSIVE:
-            raise
-        source = None
+    if parsed_main_module.local_path is None:
+        raise RuntimeError(
+            f"Local path was not identified for main module {parsed_main_module.path}"
+        )
 
-    if not parsed_main_module.version:
-        # Should not happen, since the version is always resolved from the Git repo
-        raise RuntimeError(f"Version was not identified for main module at {main_module_dir}")
+    resolution = local_module_resolver.resolve(
+        parsed_main_module.path,
+        parsed_main_module.local_path,
+    )
 
     return Module(
         name=parsed_main_module.path,
         original_name=parsed_main_module.path,
-        version=parsed_main_module.version,
+        version=resolution.version,
         main=True,
-        source=source,
+        source=resolution.source,
     )
 
 
@@ -766,7 +769,6 @@ def _resolve_gomod(
     app_dir: RootedPath,
     request: Request,
     tmp_dir: Path,
-    version_resolver: "ModuleVersionResolver",
     go: Go,
     go_work: GoWork | None,
 ) -> ResolvedGoModule:
@@ -796,9 +798,7 @@ def _resolve_gomod(
         modules_in_go_sum = _determine_which_modules_go_in_go_sum(app_dir, go_work)
         downloaded_modules = _acquire_modules(should_vendor, go, app_dir, go_work, run_params)
 
-        main_module, workspace_modules = _parse_local_modules(
-            go_work, go, run_params, app_dir, version_resolver
-        )
+        main_module, workspace_modules = _parse_local_modules(go_work, go, run_params, app_dir)
 
         deps = _go_list_deps(go, "all", run_params)
         package_modules = [pkg.module for pkg in deps if pkg.module and not pkg.module.main]
@@ -817,7 +817,6 @@ def _parse_local_modules(
     go: Go,
     run_params: dict[str, Any],
     app_dir: RootedPath,
-    version_resolver: "ModuleVersionResolver",
 ) -> tuple[ParsedModule, list[ParsedModule]]:
     """
     Identify and parse the main module and all workspace modules, if they exist.
@@ -830,13 +829,10 @@ def _parse_local_modules(
         app_dir, modules_json_stream
     )
 
-    main_module_path = main_module_dict["Path"]
-    main_module_version = version_resolver.get_golang_version(main_module_path, app_dir)
-
     main_module = ParsedModule(
-        path=main_module_path,
-        version=main_module_version,
+        path=main_module_dict["Path"],
         main=True,
+        local_path=app_dir.join_within_root(main_module_dict["Dir"]),
     )
 
     if go_work is not None:
