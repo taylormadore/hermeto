@@ -25,6 +25,7 @@ from hermeto.core.package_managers.gomod.go import (
     Go,
     GoWork,
 )
+from hermeto.core.package_managers.gomod.local import LocalModuleResolver
 from hermeto.core.package_managers.gomod.main import (
     Module,
     ModuleDict,
@@ -300,6 +301,43 @@ def test_parse_local_modules_preserves_main_module_data(rooted_tmp_path: RootedP
     assert workspace_modules == []
 
 
+def test_parse_local_modules_preserves_workspace_module_data(
+    rooted_tmp_path: RootedPath,
+) -> None:
+    module_dir = rooted_tmp_path.join_within_root("selected/module")
+    workspace_dir = rooted_tmp_path.join_within_root("deeply/nested/workspace")
+    module_dir.path.mkdir(parents=True)
+    workspace_dir.path.mkdir(parents=True)
+    go = mock.Mock(spec=Go)
+    go.return_value = "\n".join(
+        [
+            json.dumps(
+                {
+                    "Path": "example.com/selected-module",
+                    "Main": True,
+                    "Dir": str(module_dir),
+                }
+            ),
+            json.dumps(
+                {
+                    "Path": "example.com/declared-workspace-name",
+                    "Main": True,
+                    "Dir": str(workspace_dir),
+                }
+            ),
+        ]
+    )
+
+    _, workspace_modules = _parse_local_modules(mock.Mock(spec=GoWork), go, {}, module_dir)
+
+    assert workspace_modules == [
+        ParsedModule(
+            path="example.com/declared-workspace-name",
+            local_path=RootedPath(workspace_dir.path),
+        )
+    ]
+
+
 @pytest.mark.parametrize("has_workspaces", (False, True))
 @mock.patch("hermeto.core.package_managers.gomod.main._get_source_location")
 @mock.patch("hermeto.core.package_managers.gomod.main.ModuleVersionResolver")
@@ -373,14 +411,12 @@ def test_create_modules_from_parsed_data(
             name="github.com/some-org/this-other-module",
             version="v1.5.0",
             original_name="github.com/some-org/this-other-module",
-            local_replace=True,
             source=source,
         ),
         Module(
             name="github.com/some-org/yet-another-module",
             version="v1.5.0",
             original_name="github.com/some-org/yet-another-module",
-            local_replace=True,
             source=source,
         ),
     ]
@@ -402,6 +438,7 @@ def test_create_modules_from_parsed_data(
         parsed_modules,
         modules_in_go_sum,
         mock_version_resolver,
+        mock.Mock(spec=LocalModuleResolver),
         go_work,
     )
 
@@ -442,7 +479,6 @@ def test_create_modules_from_parsed_data(
                 name="example.com/project",
                 version="v1.5.0",
                 original_name="example.com/project",
-                main=True,
                 source=GitSourceLocation(
                     RepoID("https://github.com/acme/project.git", GIT_REF),
                     RootedPath("/source-repo"),
@@ -550,7 +586,6 @@ def test_module_to_component(module: Module, expected_component: Component) -> N
                 name="example.com/local-library",
                 version="v2.0.0",
                 original_name="example.com/local-library",
-                local_replace=True,
                 source=GitSourceLocation(
                     RepoID("https://github.com/acme/application.git", GIT_REF),
                     RootedPath("/source-repo"),
@@ -637,7 +672,6 @@ def test_create_packages_from_parsed_data() -> None:
             name="github.com/my-org/my-repo",
             version="v1.5.0",
             original_name="github.com/my-org/my-repo",
-            main=True,
         ),
         Module(
             name="github.com/my-org/my-repo/child-module",
@@ -701,7 +735,6 @@ def test_create_packages_from_parsed_data() -> None:
                 name="github.com/my-org/my-repo",
                 version="v1.5.0",
                 original_name="github.com/my-org/my-repo",
-                main=True,
             ),
         ),
         Package(

@@ -120,23 +120,19 @@ class Module(NamedTuple):
     name: the resolved name for this module
     original_name: module's name as written in go.mod, before any replacement
     version: the resolved version for this module
-    main: if this is the main module in the repository subpath that is being processed
     missing_hash_in_file: path (relative to repository root) to the go.sum file which should have
         had a checksum for this module but didn't
     proxy: the list of custom proxy URLs used to fetch this module, or None if the module was
         fetched directly from VCS or only via the canonical Go proxy (proxy.golang.org).
     source: optional GitSourceLocation to carry data necessary to construct vcs_url
-    local_replace: a flag to mark Modules which were obtained via a replace with a local path.
     """
 
     name: str
     original_name: str
     version: str
-    main: bool = False
     missing_hash_in_file: Path | None = None
     proxy: list[str] | None = None
     source: GitSourceLocation | None = None
-    local_replace: bool = False
 
     @property
     def purl(self) -> str:
@@ -215,11 +211,9 @@ class Package(NamedTuple):
 
 def _vcs_url_if_needed(module: Module) -> dict[str, str]:
     """Determine whether a vcs_url qualifier is necessary and provide one."""
-    if (module.main or module.local_replace) and (module.source is not None):
-        # The main module is always consumed from a local filesystem and it is always
-        # a clone of a repository, thus adding vcs_url to it.
-        # Local replaces need a vcs_url as well and are supposed to be consumed from the file
-        # system too.
+    if module.source is not None:
+        # Locally sourced modules are consumed from a Git working tree, so their repository
+        # provenance needs to be included in the PURL.
         return {"vcs_url": module.source.as_vcs_url_qualifier()}
     return dict()
 
@@ -306,15 +300,25 @@ def _create_modules_from_parsed_data(
     parsed_modules: Iterable[ParsedModule],
     modules_in_go_sum: frozenset[ModuleID],
     version_resolver: "ModuleVersionResolver",
+    local_module_resolver: LocalModuleResolver,
     go_work: GoWork | None,
 ) -> list[Module]:
     def _create_module(module: ParsedModule) -> Module:
+        if module.local_path is not None:
+            resolution = local_module_resolver.resolve(module.path, module.local_path)
+            return Module(
+                name=module.path,
+                version=resolution.version,
+                original_name=module.path,
+                source=resolution.source,
+            )
+
         mod_id = _get_module_id(module)
         name, version_or_path = mod_id
         original_name = module.path
         missing_hash_in_file = None
 
-        source, proxy, local_replace = None, None, False
+        source, proxy = None, None
         if not version_or_path.startswith("."):
             version = version_or_path
             proxy = _get_proxy_for_module(module)
@@ -331,7 +335,6 @@ def _create_modules_from_parsed_data(
             # module/name v1.0.0 => ./local/path
             resolved_replacement_path = main_module_dir.join_within_root(version_or_path)
             version = version_resolver.get_golang_version(module.path, resolved_replacement_path)
-            local_replace = True
             source = _get_source_location(main_module_dir)
 
         return Module(
@@ -340,7 +343,6 @@ def _create_modules_from_parsed_data(
             original_name=original_name,
             missing_hash_in_file=missing_hash_in_file,
             proxy=proxy,
-            local_replace=local_replace,
             source=source,
         )
 
@@ -517,6 +519,7 @@ def fetch_gomod_source(request: Request) -> RequestOutput:
                     resolve_result.parsed_modules,
                     resolve_result.modules_in_go_sum,
                     version_resolver,
+                    local_module_resolver,
                     go_work,
                 )
             )
@@ -584,7 +587,6 @@ def _create_main_module_from_parsed_data(
         name=parsed_main_module.path,
         original_name=parsed_main_module.path,
         version=resolution.version,
-        main=True,
         source=resolution.source,
     )
 
@@ -836,7 +838,8 @@ def _parse_local_modules(
     )
 
     if go_work is not None:
-        workspace_modules = [_parse_workspace_module(go_work, ws) for ws in workspace_dict_list]
+        source_dir = RootedPath(app_dir.root)
+        workspace_modules = [_parse_workspace_module(source_dir, ws) for ws in workspace_dict_list]
     return main_module, workspace_modules
 
 
@@ -868,22 +871,11 @@ def _process_modules_json_stream(
     return main_module, module_list
 
 
-def _parse_workspace_module(go_work: GoWork, module: ModuleDict) -> ParsedModule:
-    """Create a ParsedModule from a listed workspace.
-
-    The replacement info returned will always be relative to the go.work file path.
-    """
-    # there's only ever going to be a single match
-    for wp in go_work.workspace_paths:
-        if str(wp) == module["Dir"]:
-            break
-    else:
-        # This should be impossible
-        raise RuntimeError(f"Failed to match a module based on '{module['Dir']}'")
-
+def _parse_workspace_module(source_dir: RootedPath, module: ModuleDict) -> ParsedModule:
+    """Create a ParsedModule for a workspace member within the request source."""
     return ParsedModule(
         path=module["Path"],
-        replace=ParsedModule(path=f"./{wp.relative_to(go_work.path.parent)}"),
+        local_path=source_dir.join_within_root(module["Dir"]),
     )
 
 
