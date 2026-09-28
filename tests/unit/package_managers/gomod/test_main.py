@@ -25,7 +25,7 @@ from hermeto.core.package_managers.gomod.go import (
     Go,
     GoWork,
 )
-from hermeto.core.package_managers.gomod.local import LocalModuleResolver
+from hermeto.core.package_managers.gomod.local import LocalModuleResolution, LocalModuleResolver
 from hermeto.core.package_managers.gomod.main import (
     Module,
     ModuleDict,
@@ -40,12 +40,12 @@ from hermeto.core.package_managers.gomod.main import (
     _deduplicate_resolved_modules,
     _disable_telemetry,
     _get_proxy_for_module,
+    _normalize_local_replacements,
     _parse_go_sum,
     _parse_local_modules,
     _parse_vendor,
     _process_modules_json_stream,
     _resolve_gomod,
-    _validate_local_replacements,
     _vendor_change_list,
 )
 from hermeto.core.rooted_path import PathOutsideRoot, RootedPath
@@ -339,19 +339,15 @@ def test_parse_local_modules_preserves_workspace_module_data(
 
 
 @pytest.mark.parametrize("has_workspaces", (False, True))
-@mock.patch("hermeto.core.package_managers.gomod.main._get_source_location")
-@mock.patch("hermeto.core.package_managers.gomod.main.ModuleVersionResolver")
 def test_create_modules_from_parsed_data(
-    mock_version_resolver: mock.Mock,
-    mock_get_source_location: mock.Mock,
     has_workspaces: bool,
     rooted_tmp_path: RootedPath,
 ) -> None:
     main_module_dir = rooted_tmp_path.join_within_root("target-module")
-    mock_version_resolver.get_golang_version.return_value = "v1.5.0"
 
     source = GitSourceLocation(RepoID("https://github.com/org/repo.git", GIT_REF), rooted_tmp_path)
-    mock_get_source_location.return_value = source
+    local_module_resolver = mock.Mock(spec=LocalModuleResolver)
+    local_module_resolver.resolve.return_value = LocalModuleResolution("v1.5.0", source)
 
     go_work = None
 
@@ -374,6 +370,7 @@ def test_create_modules_from_parsed_data(
         ParsedModule(
             path="github.com/some-org/this-other-module",
             version="v0.0.1",
+            local_path=rooted_tmp_path.join_within_root("target-module/local-path"),
             replace=ParsedModule(
                 path="./local-path",
             ),
@@ -382,6 +379,7 @@ def test_create_modules_from_parsed_data(
         ParsedModule(
             path="github.com/some-org/yet-another-module",
             version="v0.1.0",
+            local_path=rooted_tmp_path.join_within_root("sibling-path"),
             replace=ParsedModule(
                 path="../sibling-path",
             ),
@@ -437,12 +435,21 @@ def test_create_modules_from_parsed_data(
         main_module_dir,
         parsed_modules,
         modules_in_go_sum,
-        mock_version_resolver,
-        mock.Mock(spec=LocalModuleResolver),
+        local_module_resolver,
         go_work,
     )
 
     assert modules == expect_modules
+    assert local_module_resolver.resolve.call_args_list == [
+        mock.call(
+            "github.com/some-org/this-other-module",
+            RootedPath(rooted_tmp_path.path / "target-module/local-path"),
+        ),
+        mock.call(
+            "github.com/some-org/yet-another-module",
+            RootedPath(rooted_tmp_path.path / "sibling-path"),
+        ),
+    ]
 
 
 @pytest.mark.parametrize(
@@ -818,7 +825,7 @@ def test_deduplicate_resolved_modules() -> None:
     assert set(dedup_modules) == expect_dedup_modules
 
 
-def test_validate_local_replacements(tmpdir: Path) -> None:
+def test_normalize_local_replacements(tmpdir: Path) -> None:
     app_path = RootedPath(tmpdir).join_within_root("subpath")
 
     modules = [
@@ -830,7 +837,12 @@ def test_validate_local_replacements(tmpdir: Path) -> None:
         ),
     ]
 
-    _validate_local_replacements(modules, app_path)
+    normalized_modules = _normalize_local_replacements(modules, app_path)
+
+    assert [module.local_path for module in normalized_modules] == [
+        app_path.join_within_root("another-foo"),
+        app_path.join_within_root("../sibling-foo"),
+    ]
 
 
 def test_invalid_local_replacements(tmpdir: Path) -> None:
@@ -843,7 +855,31 @@ def test_invalid_local_replacements(tmpdir: Path) -> None:
     ]
 
     with pytest.raises(PathOutsideRoot):
-        _validate_local_replacements(modules, app_path)
+        _normalize_local_replacements(modules, app_path)
+
+
+def test_normalize_vendor_replacements_in_workspace(rooted_tmp_path: RootedPath) -> None:
+    app_dir = rooted_tmp_path.join_within_root("workspace/app")
+    go_work = GoWork(rooted_tmp_path.join_within_root("workspace/go.work"), {})
+    modules = [
+        ParsedModule(path="example.org/foo", replace=ParsedModule(path="../foo")),
+    ]
+
+    normalized_modules = _normalize_local_replacements(modules, app_dir, go_work)
+
+    assert normalized_modules[0].local_path == rooted_tmp_path.join_within_root("foo")
+
+
+def test_replacement_dir_must_stay_in_source(rooted_tmp_path: RootedPath) -> None:
+    modules = [
+        ParsedModule(
+            path="example.org/foo",
+            replace=ParsedModule(path="./foo", dir=str(rooted_tmp_path.root.parent / "foo")),
+        ),
+    ]
+
+    with pytest.raises(PathOutsideRoot):
+        _normalize_local_replacements(modules, rooted_tmp_path)
 
 
 @pytest.mark.parametrize(

@@ -31,7 +31,14 @@ def _create_repo(tmp_path: Path, test_case: str) -> Path:
                 ),
             ],
         )
-    return utils.create_synthetic_repo(tmp_path, scenario_dir / "in")
+    tags: tuple[str, ...] = ()
+    if test_case == "gomod_workspaces":
+        # Directory-qualified tags expose replacements resolved against the wrong module root.
+        tags = (
+            "workspace_modules/workspace-dep/v1.2.3",
+            "workspace_modules/module-dep/v1.4.5",
+        )
+    return utils.create_synthetic_repo(tmp_path, scenario_dir / "in", tags=tags)
 
 
 @pytest.mark.parametrize(

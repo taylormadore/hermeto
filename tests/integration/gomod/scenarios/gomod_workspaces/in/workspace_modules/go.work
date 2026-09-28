@@ -5,3 +5,5 @@ use (
 	./hello
 	./hi/hiii
 )
+
+replace example.com/workspace-dep => ./workspace-dep

@@ -31,19 +31,19 @@ class LocalModuleResolution(NamedTuple):
     source: GitSourceLocation | None
 
 
-class ModuleVersionResolver:
+class _ModuleVersionResolver:
     """Resolves the versions of Go modules in a git repository."""
 
     _DUMMY_PSEUDO_VERSION = "v0.0.0-19700101000000-000000000000"
 
     def __init__(self, repo: GitRepo, commit: git.objects.commit.Commit):
-        """Initialize a ModuleVersionResolver for the provided Repo."""
+        """Initialize a version resolver for the provided Repo."""
         self._repo = repo
         self._commit = commit
 
     @classmethod
     def from_repo_path(cls, repo_path: RootedPath) -> "Self":
-        """Fetch tags from a git Repo and return a ModuleVersionResolver."""
+        """Fetch tags from a git Repo and return a version resolver."""
         repo = GitRepo(repo_path)
         commit = repo.commit(repo.rev_parse("HEAD").hexsha)
         try:
@@ -347,7 +347,7 @@ class LocalModuleResolver:
     def __init__(self, source_dir: RootedPath) -> None:
         """Initialize a resolver for the source tree in a request."""
         self._source_dir = source_dir
-        self._version_resolvers: dict[Path, ModuleVersionResolver] = {}
+        self._version_resolvers: dict[Path, _ModuleVersionResolver] = {}
 
     def resolve(
         self,
@@ -377,20 +377,20 @@ class LocalModuleResolver:
         return LocalModuleResolution(version, source)
 
     @cached_property
-    def _non_git_version_resolver(self) -> ModuleVersionResolver | None:
+    def _non_git_version_resolver(self) -> _ModuleVersionResolver | None:
         """Return a version resolver when the request source is not a Git repository."""
         try:
             GitRepo(self._source_dir.path)
         except NotAGitRepo:
             if get_config().mode != Mode.PERMISSIVE:
                 raise
-            return ModuleVersionResolver.from_non_git_source()
+            return _ModuleVersionResolver.from_non_git_source()
         return None
 
-    def _get_version_resolver(self, repo_root: RootedPath) -> ModuleVersionResolver:
+    def _get_version_resolver(self, repo_root: RootedPath) -> _ModuleVersionResolver:
         """Return the cached version resolver for a repository, creating it if needed."""
         version_resolver = self._version_resolvers.get(repo_root.path)
         if version_resolver is None:
-            version_resolver = ModuleVersionResolver.from_repo_path(repo_root)
+            version_resolver = _ModuleVersionResolver.from_repo_path(repo_root)
             self._version_resolvers[repo_root.path] = version_resolver
         return version_resolver

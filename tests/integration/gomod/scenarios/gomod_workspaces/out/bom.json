@@ -99,17 +99,21 @@
         "pkg:golang/encoding/xml?type=package",
         "pkg:golang/encoding?type=package",
         "pkg:golang/errors?type=package",
-        "pkg:golang/example.com/hello@v0.0.0-19700101000000-5f56d28e57e7?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hello",
-        "pkg:golang/example.com/hello@v0.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hello",
-        "pkg:golang/example.com/hiii@v0.0.0-19700101000000-5f56d28e57e7?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hi/hiii",
-        "pkg:golang/example.com/hiii@v0.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hi/hiii",
+        "pkg:golang/example.com/hello@v0.0.0-19700101000000-2d3cd1145689?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hello",
+        "pkg:golang/example.com/hello@v0.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hello",
+        "pkg:golang/example.com/hiii@v0.0.0-19700101000000-2d3cd1145689?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hi/hiii",
+        "pkg:golang/example.com/hiii@v0.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hi/hiii",
+        "pkg:golang/example.com/module-dep@v1.4.5?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/module-dep",
+        "pkg:golang/example.com/module-dep@v1.4.5?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/module-dep",
+        "pkg:golang/example.com/workspace-dep@v1.2.3?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/workspace-dep",
+        "pkg:golang/example.com/workspace-dep@v1.2.3?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/workspace-dep",
         "pkg:golang/fmt?type=package",
         "pkg:golang/github.com/davecgh/go-spew@v1.1.1?type=module",
         "pkg:golang/github.com/golang-jwt/jwt@v3.2.2%2Bincompatible?type=module",
         "pkg:golang/github.com/golang-jwt/jwt@v3.2.2%2Bincompatible?type=package",
-        "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/echo",
-        "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-5f56d28e57e7?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/echo",
-        "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/echo",
+        "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/echo",
+        "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-2d3cd1145689?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/echo",
+        "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/echo",
         "pkg:golang/github.com/labstack/gommon/bytes@v0.4.2?type=package",
         "pkg:golang/github.com/labstack/gommon/color@v0.4.2?type=package",
         "pkg:golang/github.com/labstack/gommon/log@v0.4.2?type=package",
@@ -1375,7 +1379,7 @@
       "type": "library"
     },
     {
-      "bom-ref": "pkg:golang/example.com/hello@v0.0.0-19700101000000-5f56d28e57e7?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hello",
+      "bom-ref": "pkg:golang/example.com/hello@v0.0.0-19700101000000-2d3cd1145689?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hello",
       "name": "example.com/hello",
       "properties": [
         {
@@ -1383,12 +1387,12 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/example.com/hello@v0.0.0-19700101000000-5f56d28e57e7?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hello",
+      "purl": "pkg:golang/example.com/hello@v0.0.0-19700101000000-2d3cd1145689?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hello",
       "type": "library",
-      "version": "v0.0.0-19700101000000-5f56d28e57e7"
+      "version": "v0.0.0-19700101000000-2d3cd1145689"
     },
     {
-      "bom-ref": "pkg:golang/example.com/hello@v0.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hello",
+      "bom-ref": "pkg:golang/example.com/hello@v0.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hello",
       "name": "example.com/hello",
       "properties": [
         {
@@ -1396,12 +1400,12 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/example.com/hello@v0.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hello",
+      "purl": "pkg:golang/example.com/hello@v0.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hello",
       "type": "library",
-      "version": "v0.0.0-19700101000000-5f56d28e57e7"
+      "version": "v0.0.0-19700101000000-2d3cd1145689"
     },
     {
-      "bom-ref": "pkg:golang/example.com/hiii@v0.0.0-19700101000000-5f56d28e57e7?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hi/hiii",
+      "bom-ref": "pkg:golang/example.com/hiii@v0.0.0-19700101000000-2d3cd1145689?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hi/hiii",
       "name": "example.com/hiii",
       "properties": [
         {
@@ -1409,12 +1413,12 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/example.com/hiii@v0.0.0-19700101000000-5f56d28e57e7?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hi/hiii",
+      "purl": "pkg:golang/example.com/hiii@v0.0.0-19700101000000-2d3cd1145689?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hi/hiii",
       "type": "library",
-      "version": "v0.0.0-19700101000000-5f56d28e57e7"
+      "version": "v0.0.0-19700101000000-2d3cd1145689"
     },
     {
-      "bom-ref": "pkg:golang/example.com/hiii@v0.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hi/hiii",
+      "bom-ref": "pkg:golang/example.com/hiii@v0.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hi/hiii",
       "name": "example.com/hiii",
       "properties": [
         {
@@ -1422,9 +1426,61 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/example.com/hiii@v0.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/hi/hiii",
+      "purl": "pkg:golang/example.com/hiii@v0.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/hi/hiii",
       "type": "library",
-      "version": "v0.0.0-19700101000000-5f56d28e57e7"
+      "version": "v0.0.0-19700101000000-2d3cd1145689"
+    },
+    {
+      "bom-ref": "pkg:golang/example.com/module-dep@v1.4.5?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/module-dep",
+      "name": "example.com/module-dep",
+      "properties": [
+        {
+          "name": "hermeto:found_by",
+          "value": "hermeto"
+        }
+      ],
+      "purl": "pkg:golang/example.com/module-dep@v1.4.5?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/module-dep",
+      "type": "library",
+      "version": "v1.4.5"
+    },
+    {
+      "bom-ref": "pkg:golang/example.com/module-dep@v1.4.5?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/module-dep",
+      "name": "example.com/module-dep",
+      "properties": [
+        {
+          "name": "hermeto:found_by",
+          "value": "hermeto"
+        }
+      ],
+      "purl": "pkg:golang/example.com/module-dep@v1.4.5?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/module-dep",
+      "type": "library",
+      "version": "v1.4.5"
+    },
+    {
+      "bom-ref": "pkg:golang/example.com/workspace-dep@v1.2.3?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/workspace-dep",
+      "name": "example.com/workspace-dep",
+      "properties": [
+        {
+          "name": "hermeto:found_by",
+          "value": "hermeto"
+        }
+      ],
+      "purl": "pkg:golang/example.com/workspace-dep@v1.2.3?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/workspace-dep",
+      "type": "library",
+      "version": "v1.2.3"
+    },
+    {
+      "bom-ref": "pkg:golang/example.com/workspace-dep@v1.2.3?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/workspace-dep",
+      "name": "example.com/workspace-dep",
+      "properties": [
+        {
+          "name": "hermeto:found_by",
+          "value": "hermeto"
+        }
+      ],
+      "purl": "pkg:golang/example.com/workspace-dep@v1.2.3?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/workspace-dep",
+      "type": "library",
+      "version": "v1.2.3"
     },
     {
       "bom-ref": "pkg:golang/fmt?type=package",
@@ -1482,7 +1538,7 @@
       "version": "v3.2.2+incompatible"
     },
     {
-      "bom-ref": "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/echo",
+      "bom-ref": "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/echo",
       "name": "github.com/labstack/echo/v4/middleware",
       "properties": [
         {
@@ -1490,12 +1546,12 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/echo",
+      "purl": "pkg:golang/github.com/labstack/echo/v4/middleware@v4.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/echo",
       "type": "library",
-      "version": "v4.0.0-19700101000000-5f56d28e57e7"
+      "version": "v4.0.0-19700101000000-2d3cd1145689"
     },
     {
-      "bom-ref": "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-5f56d28e57e7?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/echo",
+      "bom-ref": "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-2d3cd1145689?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/echo",
       "name": "github.com/labstack/echo/v4",
       "properties": [
         {
@@ -1503,12 +1559,12 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-5f56d28e57e7?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/echo",
+      "purl": "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-2d3cd1145689?type=module&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/echo",
       "type": "library",
-      "version": "v4.0.0-19700101000000-5f56d28e57e7"
+      "version": "v4.0.0-19700101000000-2d3cd1145689"
     },
     {
-      "bom-ref": "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/echo",
+      "bom-ref": "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/echo",
       "name": "github.com/labstack/echo/v4",
       "properties": [
         {
@@ -1516,9 +1572,9 @@
           "value": "hermeto"
         }
       ],
-      "purl": "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-5f56d28e57e7?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%405f56d28e57e77114463032c9fddd67e9f38d28dd%23workspace_modules/echo",
+      "purl": "pkg:golang/github.com/labstack/echo/v4@v4.0.0-19700101000000-2d3cd1145689?type=package&vcs_url=git%2Bhttps://git.example.invalid/hermeto-tests/scenario.git%402d3cd1145689c6f71b5bd04b6d7dd77bcadafe4e%23workspace_modules/echo",
       "type": "library",
-      "version": "v4.0.0-19700101000000-5f56d28e57e7"
+      "version": "v4.0.0-19700101000000-2d3cd1145689"
     },
     {
       "bom-ref": "pkg:golang/github.com/labstack/gommon/bytes@v0.4.2?type=package",
