@@ -52,10 +52,10 @@ from hermeto.core.package_managers.gomod.go import (
     _ParsedModel,
     _select_toolchain,
 )
-from hermeto.core.package_managers.gomod.local import LocalModuleResolver, ModuleVersionResolver
+from hermeto.core.package_managers.gomod.local import LocalModuleResolver
 from hermeto.core.package_managers.gomod.utils import _clean_go_modcache, _go_exec_env
 from hermeto.core.rooted_path import RootedPath
-from hermeto.core.scm import GitRepo, GitSourceLocation, get_repo_for_path, get_repo_id
+from hermeto.core.scm import GitSourceLocation, get_repo_for_path
 from hermeto.core.utils import GIT_PRISTINE_ENV, load_json_stream
 from hermeto.interface.logging import EnforcingModeLoggerAdapter
 
@@ -218,12 +218,6 @@ def _vcs_url_if_needed(module: Module) -> dict[str, str]:
     return dict()
 
 
-def _get_source_location(path: RootedPath) -> GitSourceLocation:
-    """Return the repository-root source location containing a path."""
-    repo = GitRepo(path.path, search_parent_directories=True)
-    return GitSourceLocation(get_repo_id(repo), RootedPath(repo.working_dir))
-
-
 class StandardPackage(NamedTuple):
     """A package from Go standard lib used in the SBOM generation.
 
@@ -299,13 +293,16 @@ def _create_modules_from_parsed_data(
     main_module_dir: RootedPath,
     parsed_modules: Iterable[ParsedModule],
     modules_in_go_sum: frozenset[ModuleID],
-    version_resolver: "ModuleVersionResolver",
     local_module_resolver: LocalModuleResolver,
     go_work: GoWork | None,
 ) -> list[Module]:
     def _create_module(module: ParsedModule) -> Module:
-        if module.local_path is not None:
-            resolution = local_module_resolver.resolve(module.path, module.local_path)
+        local_path = module.local_path
+        if local_path is None and module.replace is not None and module.replace.version is None:
+            local_path = main_module_dir.join_within_root(module.replace.path)
+
+        if local_path is not None:
+            resolution = local_module_resolver.resolve(module.path, local_path)
             return Module(
                 name=module.path,
                 version=resolution.version,
@@ -318,24 +315,17 @@ def _create_modules_from_parsed_data(
         original_name = module.path
         missing_hash_in_file = None
 
-        source, proxy = None, None
-        if not version_or_path.startswith("."):
-            version = version_or_path
-            proxy = _get_proxy_for_module(module)
+        version = version_or_path
+        proxy = _get_proxy_for_module(module)
 
-            if mod_id not in modules_in_go_sum:
-                if go_work:
-                    go_work_subpath = go_work.rooted_path.subpath_from_root
-                    missing_hash_in_file = go_work_subpath.parent / "go.work.sum"
-                else:
-                    missing_hash_in_file = main_module_dir.subpath_from_root / "go.sum"
+        if mod_id not in modules_in_go_sum:
+            if go_work:
+                go_work_subpath = go_work.rooted_path.subpath_from_root
+                missing_hash_in_file = go_work_subpath.parent / "go.work.sum"
+            else:
+                missing_hash_in_file = main_module_dir.subpath_from_root / "go.sum"
 
-                log.warning("checksum not found in %s: %s@%s", missing_hash_in_file, name, version)
-        else:
-            # module/name v1.0.0 => ./local/path
-            resolved_replacement_path = main_module_dir.join_within_root(version_or_path)
-            version = version_resolver.get_golang_version(module.path, resolved_replacement_path)
-            source = _get_source_location(main_module_dir)
+            log.warning("checksum not found in %s: %s@%s", missing_hash_in_file, name, version)
 
         return Module(
             name=name,
@@ -343,7 +333,6 @@ def _create_modules_from_parsed_data(
             original_name=original_name,
             missing_hash_in_file=missing_hash_in_file,
             proxy=proxy,
-            source=source,
         )
 
     return [_create_module(module) for module in parsed_modules]
@@ -447,14 +436,6 @@ def fetch_gomod_source(request: Request) -> RequestOutput:
     components: list[Component] = []
     annotations: list[Annotation] = []
 
-    try:
-        version_resolver = ModuleVersionResolver.from_repo_path(request.source_dir)
-    except NotAGitRepo:
-        if enforcing_mode == Mode.PERMISSIVE:
-            version_resolver = ModuleVersionResolver.from_non_git_source()
-        else:
-            raise
-
     local_module_resolver = LocalModuleResolver(request.source_dir)
 
     gomod_download_dir = request.output_dir.join_within_root("deps/gomod/pkg/mod/cache/download")
@@ -518,7 +499,6 @@ def fetch_gomod_source(request: Request) -> RequestOutput:
                     main_module_dir,
                     resolve_result.parsed_modules,
                     resolve_result.modules_in_go_sum,
-                    version_resolver,
                     local_module_resolver,
                     go_work,
                 )

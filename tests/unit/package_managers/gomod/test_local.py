@@ -8,7 +8,7 @@ import pytest
 from hermeto.core.errors import FetchError
 from hermeto.core.package_managers.gomod.local import (
     LocalModuleResolver,
-    ModuleVersionResolver,
+    _ModuleVersionResolver,
 )
 from hermeto.core.rooted_path import RootedPath
 from hermeto.core.scm import GitRepo
@@ -137,7 +137,7 @@ def test_get_golang_version(
     module_dir = RootedPath(golang_repo_path)
     repo = GitRepo(golang_repo_path)
     repo.git.checkout(ref)
-    version_resolver = ModuleVersionResolver(repo, repo.commit(ref))
+    version_resolver = _ModuleVersionResolver(repo, repo.commit(ref))
 
     if subpath:
         module_dir = module_dir.join_within_root(subpath)
@@ -182,7 +182,7 @@ def repo_remote_with_tag(rooted_tmp_path: RootedPath) -> tuple[RootedPath, Roote
 def test_fetch_tags(repo_remote_with_tag: tuple[RootedPath, RootedPath]) -> None:
     _, local_repo_path = repo_remote_with_tag
     assert git.Repo(local_repo_path).tags == []
-    version_resolver = ModuleVersionResolver.from_repo_path(local_repo_path)
+    version_resolver = _ModuleVersionResolver.from_repo_path(local_repo_path)
     assert version_resolver._commit_tags == ["v2.0.0"]
     assert version_resolver._all_tags == ["v1.0.0", "v2.0.0"]
 
@@ -191,10 +191,10 @@ def test_fetch_tags_fail(repo_remote_with_tag: tuple[RootedPath, RootedPath]) ->
     # The remote_repo itself has no remote configured, so will fail when fetching tags
     remote_repo_path, _ = repo_remote_with_tag
     with pytest.raises(FetchError):
-        ModuleVersionResolver.from_repo_path(remote_repo_path)
+        _ModuleVersionResolver.from_repo_path(remote_repo_path)
 
 
-@mock.patch.object(ModuleVersionResolver, "from_repo_path")
+@mock.patch.object(_ModuleVersionResolver, "from_repo_path")
 def test_reuses_version_resolver_for_modules_in_same_repository(
     from_repo_path: mock.Mock,
     rooted_tmp_path_repo: RootedPath,
@@ -208,7 +208,7 @@ def test_reuses_version_resolver_for_modules_in_same_repository(
     for module_dir in module_dirs:
         module_dir.path.mkdir()
 
-    version_resolver = mock.Mock(spec=ModuleVersionResolver)
+    version_resolver = mock.Mock(spec=_ModuleVersionResolver)
     version_resolver.get_golang_version.return_value = "v1.0.0"
     from_repo_path.return_value = version_resolver
 
