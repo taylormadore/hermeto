@@ -90,6 +90,29 @@ bundler_e2e_ruby33/
     └── .build-config.yaml
 ```
 
+### Synthetic Git repositories
+
+Files used as integration-test data, such as application source code and
+lockfiles, are stored in this repository under each scenario's `in/` directory.
+This lets changes to Hermeto and the corresponding test data be made and reviewed
+together, without coordinating changes across separately hosted test
+repositories.
+
+The synthetic repo fixtures automatically create temporary Git repositories from
+these files, with deterministic Git metadata. This supports testing behavior that
+depends on Git metadata, such as Go module versions and some package identities in the
+SBOMs. The synthetic repositories have stable placeholder origin URLs for reporting
+purposes, but the actual Git fetches stay local. Other dependency downloads may still
+use the network.
+
+For submodule scenarios, provide separate source files for the parent repository
+and each submodule. See the [Go submodule scenarios](gomod/test_gomod.py) for an
+example.
+
+Changes to committed test data or origin URLs can change commit IDs and expected
+SBOMs. [Regenerate the affected expected outputs](#generating-test-data) after
+these types of changes.
+
 ### Best practices
 
 - **Avoid duplication**: When the new scenario is a variant of an existing one
