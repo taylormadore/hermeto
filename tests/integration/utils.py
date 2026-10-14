@@ -380,8 +380,9 @@ def create_synthetic_repo(
     *,
     canonical_origin_url: str = "https://git.example.invalid/hermeto-tests/scenario.git",
     submodules: Sequence[SyntheticSubmoduleSpec] = (),
+    tags: Sequence[str] = (),
 ) -> Path:
-    """Create the parent test repo and its local origins from scenario source files."""
+    """Create a test repo and local origins, with optional tags on the parent commit."""
     parent_repo_path = tmp_path / "repo"
     local_origins_dir = tmp_path / "origins"
 
@@ -399,6 +400,9 @@ def create_synthetic_repo(
         _add_synthetic_submodule(parent_repo, parent_repo_path, submodule_origin_path, submodule)
 
     _commit_synthetic_repo(parent_repo, "test scenario")
+    with parent_repo.git.custom_environment(**_SYNTHETIC_REPO_GIT_ENV):
+        for tag in tags:
+            parent_repo.create_tag(tag)
     # Go fetches tags even without submodules, so every fixture needs a local origin
     # to keep those fetches offline while retaining its canonical URL for provenance.
     parent_origin_path = local_origins_dir / "parent"
